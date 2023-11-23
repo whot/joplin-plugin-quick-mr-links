@@ -1,12 +1,13 @@
-# Quick Links Plugin for Joplin 
+# Quick Links to GitHub/GitLab MRs and Issues Plugin for Joplin 
 
-This Plugin for the note taking app [Joplin](https://joplinapp.org/) gives you a quicker way to add Links to other notes.
+This Plugin for the note taking app [Joplin](https://joplinapp.org/) gives you a quicker way to add Links to pull/merge requests and issues on GitHub and GitLab. This plugin is a a direct descendant of the [Quick Links plugin](https://github.com/roman-r-m/joplin-plugin-quick-links).
 
 **The plugin is working only in the Markdown editor. The WYSIWG editor is not supported**
 
 ## How to use
 
-Type `@@` anywhere in your note and select the note to link in the drop down menu.
+Type `foo!!234` anywhere in your note and it resolves into a link in the form
+`[foo!234](https://<gitlab or github>/project/foo/-/merge_requests/234)`.
 
 ## How to install
 

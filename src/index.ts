@@ -69,11 +69,11 @@ async function getFolders() {
 }
 
 async function initSettings() {
-	const SECTION = 'QuickLinks';
+	const SECTION = 'QuickMRLinks';
 
 	await joplin.settings.registerSection(SECTION, {
-		description: 'Quick Links Plugin Settings',
-		label: 'Quick Links',
+		description: 'Quick MR Links Plugin Settings',
+		label: 'Quick MR Links',
 		iconName: 'fas fa-link'
 	});
 
@@ -129,11 +129,11 @@ joplin.plugins.register({
 
 		await joplin.contentScripts.register(
 			ContentScriptType.CodeMirrorPlugin,
-			'quickLinks',
-			'./QuickLinksPlugin.js'
+			'quickMRLinks',
+			'./QuickMRLinksPlugin.js'
 		);
 
-		await joplin.contentScripts.onMessage('quickLinks', async (message: any) => {
+		await joplin.contentScripts.onMessage('quickMRLinks', async (message: any) => {
 			const selectedNoteIds = await joplin.workspace.selectedNoteIds();
 			const noteId = selectedNoteIds[0];
 			if (message.command === 'getNotes') {

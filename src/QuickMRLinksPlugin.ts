@@ -88,7 +88,7 @@ module.exports = {
 		}
 
 		const plugin = function(CodeMirror) {
-			CodeMirror.defineOption('quickLinks', false, function(cm, value, prev) {
+			CodeMirror.defineOption('quickMRLinks', false, function(cm, value, prev) {
 				if (!value) return;
 
 				cm.on('inputRead', async function (cm1, change) {
@@ -127,7 +127,7 @@ module.exports = {
 			    'addon/hint/show-hint',
 			    ],
 			codeMirrorOptions: {
-    			'quickLinks': true,
+    			'quickMRLinks': true,
 			},
 			assets: function() {
 			    return [
