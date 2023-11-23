@@ -7,82 +7,51 @@ interface Hint {
 	render?: Function;
 }
 
+interface Instance {
+	host: string,
+	username: string,
+	projects: string[],
+}
+
 module.exports = {
 	default: function(context: any) {
+		const buildHints = async (project: string, link_type: string, number: string) =>{
+			const api_hook = (link_type == "!") ? "merge_requests" : "issues";
 
-		function NewNoteHint(prefix: string, todo: boolean) {
-			let description = "New Note";
+			const response = await context.postMessage({command: 'getInstances'});
 
-			if(todo)
-				description = "New Task";
-
-			const newNoteHint: Hint = {
-				text: prefix,
-				hint: async (cm, data, completion) => {
-					const from = completion.from || data.from;
-					from.ch -= 2;
-
-					const response = await context.postMessage({command: 'createNote', title: prefix, todo: todo});
-					cm.replaceRange(`[${prefix}](:/${response.newNote.id})`, from, cm.getCursor(), "complete");
-				},
-			};
-
-			newNoteHint.render = (elem, _data, _completion) => {
-				const p = elem.ownerDocument.createElement('div');
-				p.setAttribute('style', 'width: 100%; display:table;');
-				elem.appendChild(p);
-				p.innerHTML = `
-						<div style="display:table-cell; padding-right: 5px">${prefix}</div>
-						<div style="display:table-cell; text-align: right;"><small><em>${description}</em></small></div>
-						`
-			};
-			return newNoteHint;
-		}
-
-		const buildHints = async (prefix: string) =>{
-			const response = await context.postMessage({ command: 'getNotes', prefix: prefix });
+			let urls: string[] = [];
+			response.forEach((instance: Instance) => {
+				instance.projects.forEach((name_with_path: string) => {
+					/* projects are stored as group/projectname */
+					const components = name_with_path.split("/");
+					if (components.length == 2) {
+						const gname = components[0];
+						const pname = components[1];
+						if (project === pname || project.match(pname)) {
+							for (const g of [gname, instance.username]) {
+								urls.push(`https://${instance.host}/${g}/${project}/-/${api_hook}/${number}`)
+							}
+						}
+					} else {
+						console.log(`Invalid project: ${name_with_path} - must be of form group/project-name`);
+					}
+				});
+			});
 
 			let hints: Hint[] = [];
-
-			const notes = response.notes;
-			for (let i = 0; i < notes.length; i++) {
-				const note = notes[i];
+			urls.forEach((url) => {
 				const hint: Hint = {
-					text: note.title,
+					text: url,
 					hint: async (cm: Editor, data, completion) => {
 						const from = completion.from || data.from;
-						from.ch -= 2;
-						cm.replaceRange(`[${note.title}](:/${note.id})`, from, cm.getCursor(), "complete");
-						if (response.selectText) {
-							const selectionStart = Object.assign({}, from);
-							const selectionEnd = Object.assign({}, from);
-							selectionStart.ch += 1;
-							selectionEnd.ch += 1 + note.title.length;
-							cm.setSelection(selectionStart, selectionEnd)
-						}
+						const to = completion.to || data.to;
+						from.ch -= project.length + link_type.length + number.length + 1;
+						cm.replaceRange(`[${project}${link_type}${number}](${url}) `, from, to, "complete");
 					},
 				};
-				if (response.showFolders) {
-					const folder = !!note.folder ? note.folder  : "unknown";
-					hint.render = (elem, _data, _completion) => {
-						const p = elem.ownerDocument.createElement('div');
-						p.setAttribute('style', 'width: 100%; display:table;');
-						elem.appendChild(p);
-						p.innerHTML = `
-						<div style="display:table-cell; padding-right: 5px">${note.title}</div>
-						<div style="display:table-cell; text-align: right;"><small><em>In ${folder}</em></small></div>
-						`
-					};
-				} else {
-					hint.displayText = note.title;
-				}
 				hints.push(hint);
-			}
-
-			if(response.allowNewNotes && prefix) {
-				hints.push(NewNoteHint(prefix, false));
-				hints.push(NewNoteHint(prefix, true));
-			}
+			});
 
 			return hints;
 		}
@@ -92,30 +61,43 @@ module.exports = {
 				if (!value) return;
 
 				cm.on('inputRead', async function (cm1, change) {
-					if (!cm1.state.completionActive && cm.getTokenAt(cm.getCursor()).string === '@@') {
-						const start = {line: change.from.line, ch: change.from.ch + 1};
+					if (!cm1.state.completionActive) {
+						/* Resolve something like [mutter#1234] into
+						 * [mutter#1234](https://gitlab.gnome.org/GNOME/mutter/-/issues/1234)
+						 *
+						 * Main problem here: the tokenizer treats ! and # as a new token (except for ## on its own) so
+						 * we can't work on a single token.
+						 */
+						const tokens = cm.getLineTokens(cm.getCursor().line);
+						if (tokens.length >= 5) {
+							if (tokens[tokens.length - 1].string === "]" ||
+								tokens[tokens.length - 5].string === "[") {
+								const project = tokens[tokens.length - 4].string;
+								const ltype = tokens[tokens.length - 3].string;
+								const number = tokens[tokens.length - 2].string;
 
-						const hint = function(cm, callback) {
-							const cursor = cm.getCursor();
-							let prefix = cm.getRange(start, cursor) || '';
+								if ((ltype === "!" || ltype === "#") && number.match(/\d+/)) {
+									const hint = function(cm, callback) {
+										buildHints(project, ltype, number).then(hints => {
+										callback({
+												list: hints,
+												from: {line: change.from.line, ch: change.from.ch + 1},
+												to: {line: change.to.line, ch: change.to.ch + 2},
+											});
+										});
+									};
 
-							buildHints(prefix).then(hints => {
-								callback({
-									list: hints,
-									from: {line: change.from.line, ch: change.from.ch + 1},
-									to: {line: change.to.line, ch: change.to.ch + 1},
-								});
-							});
+									setTimeout(function () {
+									CodeMirror.showHint(cm, hint, {
+											completeSingle: false,
+											closeOnUnfocus: true,
+											async: true,
+											closeCharacters: /[()\[\]{};:>,1234567890]/
+										});
+									}, 10);
+								}
+							}
 						};
-
-						setTimeout(function () {
-							CodeMirror.showHint(cm, hint, {
-								completeSingle: false,
-								closeOnUnfocus: true,
-								async: true,
-								closeCharacters: /[()\[\]{};:>,]/
-							});
-						}, 10);
 					}
 				});
 			});

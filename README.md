@@ -1,17 +1,32 @@
-# Quick Links to GitHub/GitLab MRs and Issues Plugin for Joplin 
+# Quick Links to GitHub/GitLab MRs and Issues - a plugin for Joplin
 
-This Plugin for the note taking app [Joplin](https://joplinapp.org/) gives you a quicker way to add Links to pull/merge requests and issues on GitHub and GitLab. This plugin is a a direct descendant of the [Quick Links plugin](https://github.com/roman-r-m/joplin-plugin-quick-links).
+This Plugin for the note taking app [Joplin](https://joplinapp.org/) gives you
+a quicker way to add links to pull/merge requests and issues on GitHub and
+GitLab.
+
+This plugin is a a direct descendant of the [Quick Links
+plugin](https://github.com/roman-r-m/joplin-plugin-quick-links).
 
 **The plugin is working only in the Markdown editor. The WYSIWG editor is not supported**
 
 ## How to use
 
-Type `foo!!234` anywhere in your note and it resolves into a link in the form
-`[foo!234](https://<gitlab or github>/project/foo/-/merge_requests/234)`.
+In `Tools->Options` configure the projects that you want to resolve.
+Up to five instances are supported, use a configuration like:
+- `Host` set to the non-protocol-prefixed name `gitlab.example.com`
+- `Username` set to your username on that instance, e.g. `flintstone`
+- `Projects` set to a comma-separated list of regexes matching your projects *full name*, e.g. `blah/foo,boink/python-.*`.
+
+This plugin will strip the group name (`blah`) and replace it with your username so for
+every configured project you also get the option of `flintstone/foo`.
+
+In the Markdown editor:
+- type `[foo!123]` and select from the popup the MR you want to link to.
+- type `[foo#123]` and select from the popup the issue you want to link to.
 
 ## How to install
 
-From Joplin desktop open Options - Plugins, search for "quick links" and install.
+From Joplin desktop open Options - Plugins, search for "quick mr links" and install.
 
 
 # Developing on the plugin
