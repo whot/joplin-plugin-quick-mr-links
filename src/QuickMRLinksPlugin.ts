@@ -48,11 +48,11 @@ module.exports = {
 			for (let i = 0; i < notes.length; i++) {
 				const note = notes[i];
 				const hint: Hint = {
-                    text: note.title,
-                    hint: async (cm: Editor, data, completion) => {
-                        const from = completion.from || data.from;
-                        from.ch -= 2;
-                        cm.replaceRange(`[${note.title}](:/${note.id})`, from, cm.getCursor(), "complete");
+					text: note.title,
+					hint: async (cm: Editor, data, completion) => {
+						const from = completion.from || data.from;
+						from.ch -= 2;
+						cm.replaceRange(`[${note.title}](:/${note.id})`, from, cm.getCursor(), "complete");
 						if (response.selectText) {
 							const selectionStart = Object.assign({}, from);
 							const selectionEnd = Object.assign({}, from);
@@ -76,7 +76,7 @@ module.exports = {
 				} else {
 					hint.displayText = note.title;
 				}
-                hints.push(hint);
+				hints.push(hint);
 			}
 
 			if(response.allowNewNotes && prefix) {
@@ -92,8 +92,8 @@ module.exports = {
 				if (!value) return;
 
 				cm.on('inputRead', async function (cm1, change) {
-                    if (!cm1.state.completionActive && cm.getTokenAt(cm.getCursor()).string === '@@') {
-                        const start = {line: change.from.line, ch: change.from.ch + 1};
+					if (!cm1.state.completionActive && cm.getTokenAt(cm.getCursor()).string === '@@') {
+						const start = {line: change.from.line, ch: change.from.ch + 1};
 
 						const hint = function(cm, callback) {
 							const cursor = cm.getCursor();
@@ -124,16 +124,16 @@ module.exports = {
 		return {
 			plugin: plugin,
 			codeMirrorResources: [
-			    'addon/hint/show-hint',
-			    ],
+				'addon/hint/show-hint',
+			],
 			codeMirrorOptions: {
-    			'quickMRLinks': true,
+				'quickMRLinks': true,
 			},
 			assets: function() {
-			    return [
-			        { name: './show-hint.css'},
-			    ]
+				return [
+					{ name: './show-hint.css'},
+				]
 			}
-        }
-    }
+		}
+	}
 }
