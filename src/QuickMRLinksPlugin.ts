@@ -16,7 +16,6 @@ interface Instance {
 module.exports = {
 	default: function(context: any) {
 		const buildHints = async (project: string, link_type: string, number: string) =>{
-			const api_hook = (link_type == "!") ? "merge_requests" : "issues";
 
 			const response = await context.postMessage({command: 'getInstances'});
 
@@ -29,8 +28,16 @@ module.exports = {
 						const gname = components[0];
 						const pname = components[1];
 						if (project === pname || project.match(pname)) {
+							let api_hook: string;
+
+							if (instance.host.includes("github.com")) {
+								api_hook = (link_type == "!") ? "pull" : "issues";
+							} else {
+								api_hook = (link_type == "!") ? "/-/merge_requests" : "/-/issues";
+							}
+
 							for (const g of [gname, instance.username]) {
-								urls.push(`https://${instance.host}/${g}/${project}/-/${api_hook}/${number}`)
+								urls.push(`https://${instance.host}/${g}/${project}/${api_hook}/${number}`)
 							}
 						}
 					} else {
