@@ -53,7 +53,6 @@ module.exports = {
 					hint: async (cm: Editor, data, completion) => {
 						const from = completion.from || data.from;
 						const to = completion.to || data.to;
-						from.ch -= project.length + link_type.length + number.length + 1;
 						cm.replaceRange(`[${project}${link_type}${number}](${url}) `, from, to, "complete");
 					},
 				};
@@ -76,20 +75,21 @@ module.exports = {
 						 * we can't work on a single token.
 						 */
 						const tokens = cm.getLineTokens(cm.getCursor().line);
-						if (tokens.length >= 5) {
-							if (tokens[tokens.length - 1].string === "]" ||
-								tokens[tokens.length - 5].string === "[") {
-								const project = tokens[tokens.length - 4].string;
-								const ltype = tokens[tokens.length - 3].string;
-								const number = tokens[tokens.length - 2].string;
+						const ntokens = tokens.length
+						if (ntokens >= 5) {
+							if (tokens[ntokens - 1].string === "]" ||
+								tokens[ntokens - 5].string === "[") {
+								const project = tokens[ntokens - 4].string;
+								const ltype = tokens[ntokens - 3].string;
+								const number = tokens[ntokens - 2].string;
 
 								if ((ltype === "!" || ltype === "#") && number.match(/\d+/)) {
 									const hint = function(cm, callback) {
 										buildHints(project, ltype, number).then(hints => {
 										callback({
 												list: hints,
-												from: {line: change.from.line, ch: change.from.ch + 1},
-												to: {line: change.to.line, ch: change.to.ch + 2},
+												from: {line: change.from.line, ch: tokens[ntokens - 5].start },
+												to: {line: change.to.line, ch: tokens[ntokens-1].end},
 											});
 										});
 									};
