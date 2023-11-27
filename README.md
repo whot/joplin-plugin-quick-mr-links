@@ -1,8 +1,8 @@
 # Quick Links to GitHub/GitLab MRs and Issues - a plugin for Joplin
 
 This Plugin for the note taking app [Joplin](https://joplinapp.org/) gives you
-a quicker way to add links to pull/merge requests and issues on GitHub and
-GitLab.
+a quicker way to add links to pull/merge requests, issues and commits on GitHub
+and GitLab.
 
 This plugin is a a direct descendant of the [Quick Links
 plugin](https://github.com/roman-r-m/joplin-plugin-quick-links).
@@ -23,6 +23,7 @@ every configured project you also get the option of `flintstone/foo`.
 In the Markdown editor:
 - type `[foo!123]` and select from the popup the MR you want to link to.
 - type `[foo#123]` and select from the popup the issue you want to link to.
+- type `[foo@abcd123]` and select from the popup the commit you want to link to
 
 ## How to install
 

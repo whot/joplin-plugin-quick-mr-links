@@ -31,9 +31,29 @@ module.exports = {
 							let api_hook: string;
 
 							if (instance.host.includes("github.com")) {
-								api_hook = (link_type == "!") ? "pull" : "issues";
+								switch (link_type) {
+									case "!":
+										api_hook = "pull";
+										break;
+									case "#":
+										api_hook = "issues";
+										break;
+									case "@":
+										api_hook = "commit";
+										break;
+								}
 							} else {
-								api_hook = (link_type == "!") ? "/-/merge_requests" : "/-/issues";
+								switch (link_type) {
+									case "!":
+										api_hook = "-/merge_requests";
+										break;
+									case "#":
+										api_hook = "-/issues";
+										break;
+									case "@":
+										api_hook = "-/commit";
+										break;
+								}
 							}
 
 							for (const g of [gname, instance.username]) {
@@ -76,35 +96,51 @@ module.exports = {
 						 */
 						const tokens = cm.getLineTokens(cm.getCursor().line);
 						const ntokens = tokens.length
-						if (ntokens >= 5) {
-							if (tokens[ntokens - 1].string === "]" ||
-								tokens[ntokens - 5].string === "[") {
-								const project = tokens[ntokens - 4].string;
-								const ltype = tokens[ntokens - 3].string;
-								const number = tokens[ntokens - 2].string;
-
+						if (ntokens >= 3 && tokens[ntokens - 1].string === "]") {
+							let project: string;
+							let ltype: string;
+							let number: string;
+							let start: number;
+							let end: number = tokens[ntokens - 1].end;
+							let have_match: boolean = false;
+							if (ntokens >= 3 && tokens[ntokens - 3].string === "[" && tokens[ntokens - 2].string.match(/\w+@[0-9a-f]{7,}/)) {
+								let matches = tokens[ntokens-2].string.match(/(\w+)@([0-9a-f]{7,})/);
+								ltype = "@";
+								project = matches[1];
+								number = matches[2];
+								have_match = true;
+								start = tokens[ntokens - 3].start
+							} else if (ntokens >= 5 && tokens[ntokens - 5].string === "[") {
+								project = tokens[ntokens - 4].string;
+								ltype = tokens[ntokens - 3].string;
+								number = tokens[ntokens - 2].string;
 								if ((ltype === "!" || ltype === "#") && number.match(/\d+/)) {
-									const hint = function(cm, callback) {
-										buildHints(project, ltype, number).then(hints => {
-										callback({
-												list: hints,
-												from: {line: change.from.line, ch: tokens[ntokens - 5].start },
-												to: {line: change.to.line, ch: tokens[ntokens-1].end},
-											});
-										});
-									};
-
-									setTimeout(function () {
-									CodeMirror.showHint(cm, hint, {
-											completeSingle: false,
-											closeOnUnfocus: true,
-											async: true,
-											closeCharacters: /[()\[\]{};:>,1234567890]/
-										});
-									}, 10);
+									have_match = true;
+									start = tokens[ntokens - 5].start
 								}
 							}
-						};
+							if (have_match) {
+
+								const hint = function(cm, callback) {
+									buildHints(project, ltype, number).then(hints => {
+									callback({
+											list: hints,
+											from: {line: change.from.line, ch: start },
+											to: {line: change.to.line, ch: end},
+										});
+									});
+								};
+
+								setTimeout(function () {
+								CodeMirror.showHint(cm, hint, {
+										completeSingle: false,
+										closeOnUnfocus: true,
+										async: true,
+										closeCharacters: /[()\[\]{};:>,1234567890]/
+									});
+								}, 10);
+							}
+						}
 					}
 				});
 			});
